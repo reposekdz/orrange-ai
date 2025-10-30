@@ -1,0 +1,5 @@
+{
+  "name": "Nexus Coder - Full Stack App Generator",
+  "description": "An advanced AI-powered tool that generates complete full-stack application boilerplates. Describe your project, choose your technologies, and let Gemini Pro architect and code the entire file structure and content for you.",
+  "requestFramePermissions": []
+}
