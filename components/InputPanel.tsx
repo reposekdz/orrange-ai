@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { UserInput } from '../types';
 import { SpinnerIcon } from './icons/SpinnerIcon';
@@ -12,7 +11,7 @@ interface InputPanelProps {
 
 const InputField: React.FC<{ label: string; id: keyof UserInput; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; placeholder?: string }> = ({ label, id, value, onChange, placeholder }) => (
     <div>
-        <label htmlFor={id} className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
+        <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
         <input
             type="text"
             id={id}
@@ -20,14 +19,14 @@ const InputField: React.FC<{ label: string; id: keyof UserInput; value: string; 
             value={value}
             onChange={onChange}
             placeholder={placeholder}
-            className="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+            className="w-full bg-slate-100 border border-slate-300 rounded-md shadow-sm py-2 px-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
         />
     </div>
 );
 
 const TextareaField: React.FC<{ label: string; id: keyof UserInput; value: string; onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void; rows?: number; placeholder?: string }> = ({ label, id, value, onChange, rows = 3, placeholder }) => (
     <div>
-        <label htmlFor={id} className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
+        <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
         <textarea
             id={id}
             name={id}
@@ -35,7 +34,7 @@ const TextareaField: React.FC<{ label: string; id: keyof UserInput; value: strin
             onChange={onChange}
             rows={rows}
             placeholder={placeholder}
-            className="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+            className="w-full bg-slate-100 border border-slate-300 rounded-md shadow-sm py-2 px-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
         />
     </div>
 );
@@ -50,7 +49,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({ userInput, setUserInput,
 
     return (
         <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-200">Project Configuration</h2>
+            <h2 className="text-xl font-semibold text-slate-800">Project Configuration</h2>
             
             <InputField label="Project Name" id="projectName" value={userInput.projectName} onChange={handleChange} placeholder="e.g., my-awesome-app" />
             <TextareaField label="Application Description" id="description" value={userInput.description} onChange={handleChange} rows={4} placeholder="Describe the core functionality of your application." />
@@ -62,7 +61,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({ userInput, setUserInput,
             <button
                 onClick={onGenerate}
                 disabled={isLoading}
-                className="w-full flex items-center justify-center bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-800 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:scale-100"
+                className="w-full flex items-center justify-center bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:scale-100"
             >
                 {isLoading ? (
                     <>
@@ -70,7 +69,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({ userInput, setUserInput,
                         Generating...
                     </>
                 ) : (
-                    'Generate Full Stack App'
+                    'Architect Full-Stack App'
                 )}
             </button>
         </div>

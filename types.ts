@@ -1,4 +1,3 @@
-
 export interface UserInput {
   projectName: string;
   description: string;
@@ -24,5 +23,6 @@ export type FileSystemNode = FileNode | FolderNode;
 
 export interface ProjectData {
   projectName: string;
+  projectSummary: string;
   fileTree: FileSystemNode[];
 }

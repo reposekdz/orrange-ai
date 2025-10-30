@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { FileSystemNode, FileNode } from '../types';
 import { FolderIcon } from './icons/FolderIcon';
@@ -24,7 +23,7 @@ const FileSystemNodeComponent: React.FC<{
       <div>
         <div
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center p-1.5 rounded-md hover:bg-gray-700 cursor-pointer text-gray-300"
+          className="flex items-center p-1.5 rounded-md hover:bg-slate-200 cursor-pointer text-slate-700"
           style={indentStyle}
         >
           <FolderIcon isOpen={isOpen} />
@@ -51,7 +50,7 @@ const FileSystemNodeComponent: React.FC<{
     return (
       <div
         onClick={() => onFileSelect(node)}
-        className={`flex items-center p-1.5 rounded-md hover:bg-gray-700 cursor-pointer ${isSelected ? 'bg-cyan-900/50 text-cyan-300' : 'text-gray-400'}`}
+        className={`flex items-center p-1.5 rounded-md hover:bg-slate-200 cursor-pointer ${isSelected ? 'bg-orange-100 text-orange-800 font-semibold' : 'text-slate-600'}`}
         style={indentStyle}
       >
         <FileIcon />
