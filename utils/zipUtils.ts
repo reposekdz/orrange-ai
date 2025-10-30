@@ -1,29 +1,31 @@
 import JSZip from 'jszip';
-import saveAs from 'file-saver';
-import { FileSystemNode } from '../types';
+import { saveAs } from 'file-saver';
+import { FileNode } from '../types';
 
-const addNodesToZip = (nodes: FileSystemNode[], zipFolder: JSZip) => {
-  nodes.forEach(node => {
-    if (node.type === 'folder') {
-      // The `!` asserts that folder is not null, which is safe since jszip's folder method returns the new folder.
-      const folder = zipFolder.folder(node.name)!; 
-      addNodesToZip(node.children, folder);
-    } else {
-      // It's a file
-      zipFolder.file(node.name, node.content);
-    }
-  });
-};
-
-export const downloadProjectAsZip = (projectName: string, fileTree: FileSystemNode[]): void => {
-  const zip = new JSZip();
-  addNodesToZip(fileTree, zip);
-
-  zip.generateAsync({ type: 'blob' })
-    .then(content => {
-      saveAs(content, `${projectName}.zip`);
-    })
-    .catch(err => {
-        console.error("Failed to generate zip file", err);
+function addFilesToZip(zip: JSZip, files: FileNode[]) {
+    files.forEach(file => {
+        if (file.children) {
+            // It's a directory
+            const dir = zip.folder(file.name);
+            if (dir) {
+                addFilesToZip(dir, file.children);
+            }
+        } else {
+            // It's a file
+            zip.file(file.name, file.content || '');
+        }
     });
-};
+}
+
+export async function downloadProjectAsZip(projectName: string, files: FileNode[]) {
+    const zip = new JSZip();
+    addFilesToZip(zip, files);
+
+    try {
+        const content = await zip.generateAsync({ type: 'blob' });
+        saveAs(content, `${projectName}.zip`);
+    } catch(e) {
+        console.error("Error creating zip file", e);
+        alert("Could not download project. See console for details.");
+    }
+}

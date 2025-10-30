@@ -1,78 +1,55 @@
 import React, { useState } from 'react';
-import type { FileSystemNode, FileNode } from '../types';
-import { FolderIcon } from './icons/FolderIcon';
+import { FileNode } from '../types';
 import { FileIcon } from './icons/FileIcon';
+import { FolderIcon } from './icons/FolderIcon';
 
 interface FileTreeProps {
-  fileTree: FileSystemNode[];
-  onFileSelect: (file: FileNode) => void;
-  selectedFile: FileNode | null;
+    files: FileNode[];
+    onFileSelect: (file: FileNode) => void;
+    selectedFile: FileNode | null;
 }
 
-const FileSystemNodeComponent: React.FC<{
-  node: FileSystemNode;
-  onFileSelect: (file: FileNode) => void;
-  selectedFile: FileNode | null;
-  level: number;
-}> = ({ node, onFileSelect, selectedFile, level }) => {
-  const [isOpen, setIsOpen] = useState(true);
-  const indentStyle = { paddingLeft: `${level * 1.5}rem` };
+const FileTreeNode: React.FC<{ node: FileNode; onFileSelect: (file: FileNode) => void; selectedFile: FileNode | null; level?: number }> = ({ node, onFileSelect, selectedFile, level = 0 }) => {
+    const [isOpen, setIsOpen] = useState(true);
+    const isDirectory = !!node.children;
 
-  if (node.type === 'folder') {
+    const handleSelect = () => {
+        if (!isDirectory) {
+            onFileSelect(node);
+        } else {
+            setIsOpen(!isOpen);
+        }
+    };
+
+    const isSelected = !isDirectory && selectedFile?.path === node.path;
+
     return (
-      <div>
-        <div
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center p-1.5 rounded-md hover:bg-slate-200 cursor-pointer text-slate-700"
-          style={indentStyle}
-        >
-          <FolderIcon isOpen={isOpen} />
-          <span className="ml-2 font-medium">{node.name}</span>
+        <div>
+            <div
+                onClick={handleSelect}
+                className={`flex items-center p-1 cursor-pointer rounded text-sm ${isSelected ? 'bg-blue-600 text-white' : 'hover:bg-slate-700'}`}
+                style={{ paddingLeft: `${level * 1.25 + 0.25}rem` }}
+            >
+                {isDirectory ? <FolderIcon isOpen={isOpen} className="w-4 h-4 mr-2 text-orange-400 flex-shrink-0" /> : <FileIcon className="w-4 h-4 mr-2 text-slate-400 flex-shrink-0" />}
+                <span className="truncate">{node.name}</span>
+            </div>
+            {isDirectory && isOpen && node.children && (
+                <div>
+                    {node.children.map(child => (
+                        <FileTreeNode key={child.path} node={child} onFileSelect={onFileSelect} selectedFile={selectedFile} level={level + 1} />
+                    ))}
+                </div>
+            )}
         </div>
-        {isOpen && (
-          <div>
-            {node.children.map((child, index) => (
-              <FileSystemNodeComponent
-                key={`${child.name}-${index}`}
-                node={child}
-                onFileSelect={onFileSelect}
-                selectedFile={selectedFile}
-                level={level + 1}
-              />
-            ))}
-          </div>
-        )}
-      </div>
     );
-  } else {
-    // It's a file
-    const isSelected = selectedFile?.name === node.name && selectedFile?.content === node.content;
+}
+
+export const FileTree: React.FC<FileTreeProps> = ({ files, onFileSelect, selectedFile }) => {
     return (
-      <div
-        onClick={() => onFileSelect(node)}
-        className={`flex items-center p-1.5 rounded-md hover:bg-slate-200 cursor-pointer ${isSelected ? 'bg-orange-100 text-orange-800 font-semibold' : 'text-slate-600'}`}
-        style={indentStyle}
-      >
-        <FileIcon />
-        <span className="ml-2">{node.name}</span>
-      </div>
+        <div className="bg-slate-800 text-white p-2 h-full overflow-y-auto">
+            {files.map(node => (
+                <FileTreeNode key={node.path} node={node} onFileSelect={onFileSelect} selectedFile={selectedFile} />
+            ))}
+        </div>
     );
-  }
-};
-
-
-export const FileTree: React.FC<FileTreeProps> = ({ fileTree, onFileSelect, selectedFile }) => {
-  return (
-    <div className="text-sm">
-      {fileTree.map((node, index) => (
-        <FileSystemNodeComponent 
-            key={`${node.name}-${index}`} 
-            node={node} 
-            onFileSelect={onFileSelect} 
-            selectedFile={selectedFile}
-            level={0}
-        />
-      ))}
-    </div>
-  );
 };

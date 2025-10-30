@@ -1,82 +1,124 @@
-import { GoogleGenAI } from "@google/genai";
-import type { UserInput, ProjectData } from '../types';
+import { GoogleGenAI, Type } from "@google/genai";
+import { Message, ProjectFile } from '../types';
 
-const buildPrompt = (userInput: UserInput): string => {
-  const { projectName, description, frontendTech, backendTech, databaseTech, advancedFeatures } = userInput;
+// Fix: Initialize GoogleGenAI with API key from environment variables.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
-  return `
-You are Nexus Coder, a world-class AI full-stack software architect. Your task is to generate a complete, functional, and production-ready full-stack application based on the user's requirements.
+// Fix: Use a powerful model suitable for code generation.
+const model = 'gemini-2.5-pro';
 
-**User Requirements:**
-- Project Name: ${projectName}
-- Description: ${description}
-- Frontend: ${frontendTech}
-- Backend: ${backendTech}
-- Database: ${databaseTech}
-- Additional Features: ${advancedFeatures}
+const GENERATE_PROMPT = `
+You are an expert web developer specializing in React, TypeScript, and Tailwind CSS.
+Your task is to generate the code for a web component based on a user's prompt.
 
-**Your Output MUST be a single, valid JSON object with the following structure:**
+You must follow these rules:
+1.  Always generate a complete, self-contained, and runnable project.
+2.  Use React with TypeScript (.tsx files) and functional components with hooks.
+3.  Use Tailwind CSS for styling. A \`tailwind.config.js\` and an input CSS file with \`@tailwind\` directives should be included.
+4.  The project structure should be logical. At a minimum, include:
+    *   \`package.json\` with necessary dependencies (react, react-dom, tailwindcss, etc.) and devDependencies (typescript, vite, etc.). Use Vite as the build tool.
+    *   \`vite.config.ts\`
+    *   \`tsconfig.json\`
+    *   \`tailwind.config.js\`
+    *   \`postcss.config.js\`
+    *   \`index.html\`
+    *   \`src/\` directory containing:
+        *   \`main.tsx\` (the entry point)
+        *   \`App.tsx\` (the root component)
+        *   \`index.css\` (with tailwind directives)
+        *   \`components/\` directory for the generated components.
+5.  Provide a short, one-sentence summary of the generated project.
+6.  The response MUST be a single JSON object. Do not wrap it in markdown backticks.
+7.  The JSON object must have two keys: "summary" (a string) and "files" (an array of objects, where each object has "path" and "content" string properties).
+8.  File paths should be relative to the project root (e.g., "src/components/Button.tsx").
+9.  Do not include any explanations or conversational text outside of the JSON object.
+`;
 
-{
-  "projectName": "The name of the project",
-  "projectSummary": "A detailed summary in Markdown format. Include sections for 'Architecture Overview', 'Tech Stack', 'Setup & Installation', and 'Running the Application'.",
-  "fileTree": [
-    // Array of file and folder objects
-  ]
-}
+const ITERATE_PROMPT = `
+You are an expert web developer specializing in React, TypeScript, and Tailwind CSS.
+Your task is to modify an existing web component project based on a user's request.
 
-**The \`fileTree\` array contains objects with these properties:**
-- \`type\`: "file" or "folder"
-- \`name\`: The name of the file or folder (e.g., "index.js", "src")
-- \`content\`: (for files only) A string containing the full code for the file. Escape all special characters, especially backticks (\`), newlines (\\n), and quotes (\\").
-- \`children\`: (for folders only) An array of file and folder objects, recursively representing the folder's contents.
+You will be given the current project files and a user prompt with the requested changes.
 
-**Instructions & Best Practices:**
-1.  **Project Summary:** Start by writing a comprehensive \`projectSummary\` in Markdown. This is crucial.
-2.  **Directory Structure:** Create a logical and standard monorepo or separate directory structure (e.g., \`/client\`, \`/server\`) for the specified technologies.
-3.  **Production-Ready Code:** Generate complete, runnable, and well-commented code for every file. This includes \`package.json\`, configuration files (\`tsconfig.json\`, \`.eslintrc\`), server entry points, frontend components, API routes, database models, etc.
-4.  **Containerization:** If it's a web application, include a \`Dockerfile\` for both the frontend and backend services to ensure easy containerization.
-5.  **CI/CD:** Include a basic CI/CD pipeline configuration file (e.g., \`.github/workflows/main.yml\`) that details steps to build and test the application.
-6.  **Testing:** Set up a standard testing framework (e.g., Jest with Testing Library for React; Jest or Mocha/Chai for Node.js). Include sample unit or integration tests to demonstrate usage.
-7.  **Environment Variables:** Provide placeholder environment variables in a \`.env.example\` file. DO NOT include a \`.env\` file.
-8.  **Final Output:** The final output MUST be only the JSON object, with no other text, explanation, or markdown formatting before or after it. Ensure the JSON is perfectly valid.
-  `;
+You must follow these rules:
+1.  Modify the files as requested. You can add, delete, or update files.
+2.  Ensure the project remains complete and runnable.
+3.  Provide a short, one-sentence summary of the changes made.
+4.  The response MUST be a single JSON object. Do not wrap it in markdown backticks.
+5.  The JSON object must have two keys: "summary" (a string) and "files" (an array of objects, where each object has "path" and "content" string properties).
+6.  The "files" array must contain ALL files for the project, not just the changed ones.
+7.  File paths should be relative to the project root (e.g., "src/components/Button.tsx").
+8.  Do not include any explanations or conversational text outside of the JSON object.
+`;
+
+const responseSchema = {
+    type: Type.OBJECT,
+    properties: {
+        summary: { type: Type.STRING, description: "A short, one-sentence summary of the generated project or changes made." },
+        files: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    path: { type: Type.STRING, description: "File path relative to the project root." },
+                    content: { type: Type.STRING, description: "The full content of the file." },
+                },
+                required: ['path', 'content'],
+            },
+        },
+    },
+    required: ['summary', 'files'],
 };
 
+export const generateComponent = async (prompt: string) => {
+    try {
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: [{ parts: [{ text: prompt }] }],
+            config: {
+                systemInstruction: GENERATE_PROMPT,
+                responseMimeType: 'application/json',
+                responseSchema: responseSchema,
+                temperature: 0.1,
+            },
+        });
 
-export const generateProject = async (userInput: UserInput): Promise<ProjectData> => {
-  if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set.");
-  }
-  
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const prompt = buildPrompt(userInput);
-
-  try {
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          temperature: 0.2,
-        }
-    });
-    
-    const jsonString = response.text;
-    const parsedData: ProjectData = JSON.parse(jsonString);
-    
-    // Validation for the new, more complex structure
-    if (!parsedData.projectName || !parsedData.projectSummary || !Array.isArray(parsedData.fileTree)) {
-        throw new Error("Invalid JSON structure received from API. Essential fields are missing.");
+        const jsonText = response.text;
+        return JSON.parse(jsonText);
+    } catch (error) {
+        console.error("Error generating component:", error);
+        throw new Error("Failed to generate component. The AI model may have returned an invalid response. Please try again or check the console for details.");
     }
+};
 
-    return parsedData;
+export const iterateComponent = async (prompt: string, files: ProjectFile[], conversationHistory: Message[]) => {
+    try {
+        const fileContent = files.map(f => `// File: ${f.path}\n\n${f.content}`).join('\n\n---\n\n');
+        
+        const fullPrompt = `
+        User request: "${prompt}"
 
-  } catch (error) {
-    console.error("Error calling Gemini API:", error);
-    if (error instanceof SyntaxError) {
-        throw new Error("Failed to parse the response from the AI. The generated JSON was malformed.");
+        Current project files:
+        ---
+        ${fileContent}
+        ---
+        `;
+
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: [{ parts: [{ text: fullPrompt }] }],
+            config: {
+                systemInstruction: ITERATE_PROMPT,
+                responseMimeType: 'application/json',
+                responseSchema: responseSchema,
+                temperature: 0.2,
+            },
+        });
+
+        const jsonText = response.text;
+        return JSON.parse(jsonText);
+    } catch (error) {
+        console.error("Error iterating on component:", error);
+        throw new Error("Failed to update component. The AI model may have returned an invalid response. Please try again or check the console for details.");
     }
-    throw new Error(`An error occurred while communicating with the Gemini API: ${error instanceof Error ? error.message : String(error)}`);
-  }
 };

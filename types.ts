@@ -1,28 +1,22 @@
-export interface UserInput {
-  projectName: string;
-  description: string;
-  frontendTech: string;
-  backendTech: string;
-  databaseTech: string;
-  advancedFeatures: string;
-}
-
 export interface FileNode {
-  type: 'file';
   name: string;
-  content: string;
+  path: string;
+  content?: string;
+  children?: FileNode[];
 }
 
-export interface FolderNode {
-  type: 'folder';
-  name: string;
-  children: (FileNode | FolderNode)[];
+export interface Message {
+  id: string;
+  text: string;
+  sender: 'user' | 'bot' | 'system';
 }
 
-export type FileSystemNode = FileNode | FolderNode;
+export interface ProjectFile {
+    path: string;
+    content: string;
+}
 
-export interface ProjectData {
-  projectName: string;
-  projectSummary: string;
-  fileTree: FileSystemNode[];
+export interface Project {
+  summary: string;
+  files: ProjectFile[];
 }
